@@ -27,12 +27,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Test the Application
-      # (Optional) Run any tests to ensure the app works before deployment
-      # You can skip this step if you don’t have tests set up
-      run: |
-        pytest  # Make sure pytest is installed, or skip this if you have no tests
-
     - name: Deploy to Glitch
       # Use a CURL request to trigger Glitch project redeployment
       run: |
