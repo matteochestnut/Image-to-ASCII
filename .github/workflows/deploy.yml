@@ -1,0 +1,41 @@
+name: Deploy to Glitch
+
+# Trigger this action on any push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      # Checkout the repository code
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      # Set up the Python environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Dependencies
+      # Install Python dependencies from requirements.txt
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Test the Application
+      # (Optional) Run any tests to ensure the app works before deployment
+      # You can skip this step if you don’t have tests set up
+      run: |
+        pytest  # Make sure pytest is installed, or skip this if you have no tests
+
+    - name: Deploy to Glitch
+      # Use a CURL request to trigger Glitch project redeployment
+      run: |
+        curl -X POST -d "project=https://glitch.com/~image-to-ascii-matteochestnut" https://api.glitch.com/project/github/deploy
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
