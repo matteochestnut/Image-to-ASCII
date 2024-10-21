@@ -1,42 +1,45 @@
+# app/routes.py
+# This file defines the routes and handles image uploads, processing, and downloads
+
 import os
-from flask import request, jsonify, send_from_directory
+from flask import Blueprint, render_template, request, send_file, jsonify, send_file
 from werkzeug.utils import secure_filename
-from app.utils.image_processing import convert_to_black_and_white
+from app.utils.image_processing import convert_to_ASCII
+import io
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+bp = Blueprint('main', __name__)
 
-def allowed_file(filename):
-    """Check if the uploaded file has an allowed extension."""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Route to render the main index page
+@bp.route('/')
+def index():
+    """Render the index page."""
+    return send_file('../index.html')
 
-def configure_routes(app):
-    """Configure the routes for the Flask app."""
-    
-    @app.route('/convert', methods=['POST'])
-    def convert_image():
+# Route to handle the file upload and image processing
+@bp.route('/upload', methods=['POST'])
+def upload_file():
+    """Handle image upload and conversion."""
+    try:
         if 'file' not in request.files:
-            return jsonify({'status': 'error', 'error': 'No file part'}), 400
-
+            return jsonify({'error': 'No file part'}), 400
         file = request.files['file']
-
         if file.filename == '':
-            return jsonify({'status': 'error', 'error': 'No selected file'}), 400
+            return jsonify({'error': 'No selected file'}), 400
+        
+        # Save the uploaded file
+        filename = secure_filename(file.filename)
+        image_bytes = file.read()
 
-        if file and allowed_file(file.filename):
-            # Save the uploaded file
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
+        # Convert the image using the image processing function
+        processed_image = convert_to_ASCII(image_bytes)
 
-            # Convert the image using utility function
-            processed_filename = convert_to_black_and_white(file_path, filename, app.config['PROCESSED_FOLDER'])
+        # Create an in-memory file and return the processed image as a response
+        img_io = io.BytesIO()
+        processed_image.save(img_io, 'PNG')
+        img_io.seek(0)
 
-            # Return the path to the processed image
-            return jsonify({'status': 'success', 'bw_image_url': f'/processed/{processed_filename}'})
-        else:
-            return jsonify({'status': 'error', 'error': 'File type not allowed'}), 400
-
-    @app.route('/processed/<filename>')
-    def processed_file(filename):
-        """Serve the processed image."""
-        return send_from_directory(app.config['PROCESSED_FOLDER'], filename)
+        return send_file(img_io, mimetype='image/png', as_attachment=False)
+    
+    except Exception as e:
+        # Handle errors and return a JSON response
+        return jsonify({'error': str(e)}), 500

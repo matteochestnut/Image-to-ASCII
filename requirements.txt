@@ -1,3 +1,4 @@
 Flask==3.0.3
 opencv-python==4.10.0.82
 Werkzeug==3.0.4
+PIL==10.4.0

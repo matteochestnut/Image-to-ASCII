@@ -1,16 +1,17 @@
+# app/__init__.py
+# Initializes the Flask app and registers routes
+
 from flask import Flask
-from app.routes import configure_routes
 
 def create_app():
-    # Create Flask app instance
+    """Creates and configures the Flask application."""
     app = Flask(__name__)
     
-    # Configuration
-    app.config['UPLOAD_FOLDER'] = 'uploads'
-    app.config['PROCESSED_FOLDER'] = 'processed'
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max image upload
+    # Set up caching to optimize performance
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     
-    # Initialize routes
-    configure_routes(app)
-
+    # Register the routes
+    from app.routes import bp as main_bp
+    app.register_blueprint(main_bp)
+    
     return app
